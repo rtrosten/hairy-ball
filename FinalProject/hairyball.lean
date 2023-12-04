@@ -2,7 +2,7 @@ import Mathlib
 
 open RealInnerProductSpace
 
--- def E n := EuclideanSpace ℝ (Fin n)
+notation "E" n:30 => EuclideanSpace ℝ (Fin n)
 
 structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) where
   diff : ContDiff ℝ ⊤ v
@@ -10,13 +10,18 @@ structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace �
 
 structure IsEqvSphVF {n : ℕ}
   (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) extends IsSphVF v where
-  equiv : ∀ r > (0 : ℝ), ∀ x, v (r * x) = r * v x
+  equiv : ∀ r > (0 : ℝ), ∀ x, v (r • x) = r • v x
 
-theorem hairy_ball {n} {v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n :=
-  sorry
+open Polynomial
 
+def IsPolynomialFun (f : ℝ → ℝ) := ∃ P : ℝ[X], f = P.eval
 
+example (P Q : ℝ[X]) (h : P.eval = Q.eval) : P = Q := Polynomial.funext (congrFun h)
+
+theorem hairy_ball_aux {n} {v : E n → E n} (h : IsEqvSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry
+
+theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry
 
 open MeasureTheory Metric ENNReal
 
-#check volume (ball (0 : EuclideanSpace ℝ (Fin 3)) 1)
+#check volume (ball (0 : E 3) 1)

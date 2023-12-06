@@ -18,16 +18,17 @@ def IsPolynomialFun (f : ℝ → ℝ) := ∃ P : ℝ[X], f = P.eval
 
 example (P Q : ℝ[X]) (h : P.eval = Q.eval) : P = Q := Polynomial.funext (congrFun h)
 
-
-
 lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := by
 
-  let q : ℝ → ℝ := fun x ↦ (1 + x^2)^(n/2)
+  let q : ℝ → ℝ := fun x ↦ (1 + x^2)^(n/2 : ℝ)
   have hq : IsPolynomialFun (q*q) := by
     use (1+X^2)^n
     ext z
     simp
+    ring_nf
+    simp
     sorry
+  have even_mult
   -- have h : ∀ (x : ℝ) (p * p - q * q).eval x = 0 := sorry
   -- have bruh := zero_of_eval_zero p*p-q*q
   sorry

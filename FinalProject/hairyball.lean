@@ -25,12 +25,13 @@ lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := 
     use (1+X^2)^n
     ext z
     simp
-    ring_nf
-    simp
-    sorry
-  have even_mult
-  -- have h : ∀ (x : ℝ) (p * p - q * q).eval x = 0 := sorry
-  -- have bruh := zero_of_eval_zero p*p-q*q
+    rw [← Real.rpow_add, ← Real.rpow_nat_cast]
+    field_simp
+    positivity
+  rcases hq with ⟨k, hk⟩
+
+  have h : ∀ (x : ℝ) (p * p - q * q).eval x = 0 := sorry
+  have bruh := zero_of_eval_zero p*p-q*q
   sorry
 
 theorem hairy_ball_aux {n} {v : E n → E n} (h : IsEqvSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry

@@ -12,11 +12,14 @@ structure IsEqvSphVF {n : ℕ}
   (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) extends IsSphVF v where
   equiv : ∀ r > (0 : ℝ), ∀ x, v (r • x) = r • v x
 
-open Polynomial MeasureTheory Metric ENNReal
+open Polynomial MeasureTheory Metric ENNReal Topology
 
 def IsPolynomialFun (f : ℝ → ℝ) := ∃ P : ℝ[X], f = P.eval
 
 example (P Q : ℝ[X]) (h : P.eval = Q.eval) : P = Q := Polynomial.funext (congrFun h)
+
+lemma c1_implies_lipschitz (v : E n → E n) (hv : IsSphVF v) (A : Set (E n)) (hA: convex A) : ∃ K : NNReal, LipschitzWith K (Set.restrict v A) := by
+  sorry
 
 lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := by
 

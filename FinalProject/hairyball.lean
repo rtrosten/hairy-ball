@@ -84,27 +84,27 @@ lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
   have hK₂ := hK.2
   have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C > 0, AntilipschitzWith (C : NNReal) (f v t) := by
     have G₁ : ∀ t, ∀ x y : E n, ‖f v t x - f v t y‖ ≥ (1-(K:ℝ)*|t|) * ‖x-y‖ := by
-      sorry/- intro t x y
+      intro t x y
       calc
         ‖f v t x - f v t y‖ = ‖x - y + t • (v x - v y)‖ := by congr 1; rw [smul_sub]; dsimp [f]; abel
         _ ≥ ‖x-y‖ - ‖t • (v x - v y)‖ := by apply norm_sub_norm_le''
         _ = ‖x-y‖ - |t| * ‖v x - v y‖ := by rw [norm_smul, Real.norm_eq_abs]
         _ ≥ ‖x-y‖ - |t| * (K * ‖x-y‖) := by gcongr ; apply hK₂.dist_le_mul
-        _ = (1-K*|t|)*‖x-y‖ := by linarith -/
+        _ = (1-K*|t|)*‖x-y‖ := by linarith
 
     have G₂ : ∀ᶠ t in 𝓝 (0 : ℝ), (K:ℝ)*|t| < 1 := by
-      sorry/- have H₁ : ∀ t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)), K*|t| < 1 := by
+      have H₁ : ∀ t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)), K*|t| < 1 := by
         intro t ht
         have : |t| < 1/K := abs_lt.mpr ht
         have hK₁' : (0 : ℝ) < K := by exact_mod_cast hK₁
         rwa [lt_div_iff' hK₁'] at this
       have H₂ : ∀ᶠ t in 𝓝 (0 : ℝ), t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)) := by
         refine Ioo_mem_nhds ?ha ?hb <;> simp [hK]
-      exact H₂.mono H₁ -/
+      exact H₂.mono H₁
 
     have G₃ : ∀ (t : ℝ), (K:ℝ) * |t| < 1 → 1 - (K:ℝ) * |t| > 0 := by
-      sorry/- intro t ht
-      linarith -/
+      intro t ht
+      linarith
 
     have G₄ := G₂.mono G₃
 
@@ -112,15 +112,21 @@ lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
       intro t ht
       use 1/⟨1-K*|t|, ht.le⟩
       constructor
-      ·
-        exact one_div_pos.mpr ht
+      · exact one_div_pos.mpr ht
       · rw [antilipschitzWith_iff_le_mul_dist]
         peel G₁ t with H y x
-        simp [dist_eq_norm]
-        sorry
+        field_simp
+        exact (le_div_iff' ht).mpr (G₁ t y x)
 
-    sorry
-  sorry
+    exact G₄.mono G₅
+
+  have F₂ : ∀ t, (∃ C > 0, AntilipschitzWith C (f v t)) → Injective (f v t) := by
+    intro t hc
+    rcases hc with ⟨c,_,hcc⟩
+    apply AntilipschitzWith.injective
+    exact hcc
+
+  exact F₁.mono F₂
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
 ∀ x, ‖v x‖ = 1) : Even n := by

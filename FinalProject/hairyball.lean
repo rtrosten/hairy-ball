@@ -128,6 +128,27 @@ lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
 
   exact F₁.mono F₂
 
+lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ u : E n, ‖u‖ = 1 → ‖v u‖ = 1): ∀ᶠ t in 𝓝 (0 : ℝ), (∀ u : E n, ‖u‖ = 1 → ‖f v t u‖ = Real.sqrt (1 + t^2))
+  ∧ (∀ u' : E n, ‖u'‖ = Real.sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u') := by
+  have fact : ∀ t : ℝ, ∀ u : E n, ‖u‖ = 1 → ‖f v t u‖^2 = 1 + t^2 := by
+    intro t u hu
+    calc ‖f v t u‖^2 = ‖u + t • v u‖^2 := by congr
+      _ = ‖u‖^2 + 2 * ⟪u, (t • v u)⟫ + ‖t • v u‖^2 := norm_add_sq_real u (t • v u)
+      _ = ‖u‖^2  + ‖t • v u‖^2 := by
+        simp [-PiLp.inner_apply, real_inner_smul_right, h.perp _ hu]
+      _ = 1 + ‖t • v u‖^2 := by
+        rw [hu]
+        simp
+      _ = 1 + t^2 * ‖v u‖^2 := by
+        rw [norm_smul, mul_pow]
+        simp
+      _ = 1 + t^2 := by
+        rw [hv u hu]
+        simp
+  let g := fun v t x ↦ (1 / (Real.sqrt (1 + t^2))) • (f (n := n) v t x)
+  have restrict : g '' {x : E n | ‖x‖ = 1} ⊆ {x : E n | ‖x‖ = 1} := by
+  sorry
+
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
 ∀ x, ‖v x‖ = 1) : Even n := by
   have ss_inj : suff_small_inj (f v) := f_inj h

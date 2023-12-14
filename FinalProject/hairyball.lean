@@ -4,6 +4,8 @@ open RealInnerProductSpace
 
 notation "E" n:30 => EuclideanSpace ℝ (Fin n)
 
+
+
 structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) where
   diff : ContDiff ℝ ⊤ v
   perp : ∀x, ‖x‖ = 1 → ⟪x, v x⟫ = 0
@@ -14,13 +16,17 @@ structure IsEqvSphVF {n : ℕ}
 
 open Polynomial MeasureTheory Metric ENNReal Topology
 
+def suff_small_inj (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Function.Injective (f t)
+def suff_small_surj (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Function.Surjective (f t)
 def IsPolynomialFun (f : ℝ → ℝ) := ∃ P : ℝ[X], f = P.eval
 
 example (P Q : ℝ[X]) (h : P.eval = Q.eval) : P = Q := Polynomial.funext (congrFun h)
 
-lemma c1_implies_lipschitz (v : E n → E n) (hv : IsSphVF v) (A : Set (E n)) (hA: convex A) : ∃ K : NNReal, LipschitzWith K (Set.restrict v A) := by
-  sorry
 
+lemma smooth_imp_c1 (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ContDiff ℝ 1 v :=
+  hv.of_le le_top
+
+lemma c1_implies_lipschitz (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ∃ K, LipschitzWith K v := by sorry
 lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := by
 
   let q : ℝ → ℝ := fun x ↦ (1 + x^2)^(n/2 : ℝ)
@@ -32,14 +38,19 @@ lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := 
     field_simp
     positivity
   rcases hq with ⟨k, hk⟩
-
-  have h : ∀ (x : ℝ) (p * p - q * q).eval x = 0 := sorry
-  have bruh := zero_of_eval_zero p*p-q*q
   sorry
+
 
 theorem hairy_ball_aux {n} {v : E n → E n} (h : IsEqvSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry
 
-theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry
+theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := by
+  let f : ℝ → E n → E n := fun t ↦ (fun x ↦ (x + t • (v x)))
+  have ss_inj : suff_small_inj f := by
+    rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
+
+
+  sorry
+
 
 
 

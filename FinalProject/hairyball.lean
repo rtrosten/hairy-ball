@@ -82,7 +82,7 @@ lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
   rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
   have hK₁ := hK.1
   have hK₂ := hK.2
-  have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C, AntilipschitzWith (C : NNReal) (f v t) := by
+  have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C > 0, AntilipschitzWith (C : NNReal) (f v t) := by
     have G₁ : ∀ t, ∀ x y : E n, ‖f v t x - f v t y‖ ≥ (1-(K:ℝ)*|t|) * ‖x-y‖ := by
       sorry/- intro t x y
       calc
@@ -108,16 +108,22 @@ lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
 
     have G₄ := G₂.mono G₃
 
-    have G₅ : ∀ (t : ℝ), 1-(K:ℝ) * |t| > 0 → ∃ C, AntilipschitzWith C (f v t) := by
+    have G₅ : ∀ (t : ℝ), 1-(K:ℝ) * |t| > 0 → ∃ C > 0, AntilipschitzWith C (f v t) := by
       intro t ht
-      use ⟨1-K*|t|, ht.le⟩
-      sorry
+      use 1/⟨1-K*|t|, ht.le⟩
+      constructor
+      ·
+        exact one_div_pos.mpr ht
+      · rw [antilipschitzWith_iff_le_mul_dist]
+        peel G₁ t with H y x
+        simp [dist_eq_norm]
+        sorry
+
     sorry
   sorry
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
 ∀ x, ‖v x‖ = 1) : Even n := by
-  --let f : ℝ → E n → E n := fun t ↦ (fun x ↦ (x + t • (v x)))
   have ss_inj : suff_small_inj (f v) := f_inj h
   sorry
 

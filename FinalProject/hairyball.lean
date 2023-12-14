@@ -16,8 +16,8 @@ structure IsEqvSphVF {n : ℕ}
 
 open Polynomial MeasureTheory Metric ENNReal Topology Set Filter Function
 
-def suff_small_inj (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Injective (f t)
-def suff_small_surj (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Surjective (f t)
+def suff_small_inj {n} (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Injective (f t)
+def suff_small_surj {n} (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Surjective (f t)
 def IsPolynomialFun (f : ℝ → ℝ) := ∃ P : ℝ[X], f = P.eval
 
 example (P Q : ℝ[X]) (h : P.eval = Q.eval) : P = Q := Polynomial.funext (congrFun h)
@@ -43,16 +43,14 @@ example {K : ℝ} : ∀ᶠ t in 𝓝 (0 : ℝ), K*|t| < 1 := by
   exact F₁.eventually F₂
 
 
-lemma smooth_imp_c1 (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ContDiff ℝ 1 v :=
+lemma smooth_imp_c1 {n} (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ContDiff ℝ 1 v :=
   hv.of_le le_top
 
-lemma c1_implies_lipschitz (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ∃ K, LipschitzWith K v := by sorry
+lemma c1_implies_lipschitz {n} (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ∃ K > 0, LipschitzWith K v := by sorry
 
-lemma c1_implies_lipschitz2 (v : E n → E n) (hv : ContDiff ℝ ⊤ v) (A : Set (E n)) (hA : Convex ℝ A) : ∃ K : NNReal, LipschitzWith K (Set.restrict A v) := by
-
+lemma c1_implies_lipschitz2 {n} (v : E n → E n) (hv : ContDiff ℝ ⊤ v) (A : Set (E n)) (hA : Convex ℝ A) : ∃ K : NNReal, LipschitzWith K (Set.restrict A v) := by
   sorry
 
-lemma c1_implies_lipschitz (v : E n → E n) (hv : ContDiff ℝ ⊤ v) : ∃ K, LipschitzWith K v := by sorry
 lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := by
 
   let q : ℝ → ℝ := fun x ↦ (1 + x^2)^(n/2 : ℝ)
@@ -66,22 +64,42 @@ lemma sqrt_poly {n} (h : IsPolynomialFun (fun x ↦ (1+x^2)^(n/2))) : Even n := 
   rcases hq with ⟨k, hk⟩
   sorry
 
-lemma poly_transform (v : E n → E n) (hv : ContDiff ℝ ⊤ v) (A : Set (E n)) (hA : IsCompact A) :
-  ∀ᶠ t in 𝓝 0, (Function.Injective (fun x : A ↦ x + t • (v x)) ∧
-  IsPolynomialFun (fun t ↦ volume ((fun x : A ↦ x + t • (v x))'' A))) := sorry
+-- lemma poly_transform {n} (v : E n → E n) (hv : ContDiff ℝ ⊤ v) (A : Set (E n)) (hA : IsCompact A) :
+--   ∀ᶠ t in 𝓝 0, (Function.Injective (fun x : A ↦ x + t • (v x)) ∧
+--   IsPolynomialFun (fun t ↦ volume ((fun x : A ↦ x + t • (v x))'' A))) := sorry
 
 theorem hairy_ball_aux {n} {v : E n → E n} (h : IsEqvSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := sorry
+
+
+lemma norm_sub_norm_le'' {F : Type*} [SeminormedAddGroup F] (a b : F) : ‖a‖ - ‖b‖ ≤ ‖a + b‖ := by
+  convert norm_sub_norm_le a (-b) using 1 <;> simp
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) : Even n := by
   let f : ℝ → E n → E n := fun t ↦ (fun x ↦ (x + t • (v x)))
   have ss_inj : suff_small_inj f := by
     rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
-    have F₁ : ∀ᶠ t in 𝓝 0, ∃C, AntilipschitzWith C (f t) := by
-      have G₁ : ∀ x y : E n, ‖f t x - f t y‖ ≥ (1-C|t|) * ‖x-y‖ := by
-        sorry
-      have G₂ : ∀ᶠ t in 𝓝 (0 : ℝ), K*|t| < 1 := by
-        sorry
-      exact G₂.mono G₁
+    have hK₁ := hK.1
+    have hK₂ := hK.2
+    have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C, AntilipschitzWith (C : NNReal) (f t) := by
+      have G₁ : ∀ t, ∀ x y : E n, ‖f t x - f t y‖ ≥ (1-(K:ℝ)*|t|) * ‖x-y‖ := by
+        intro t x y
+        calc
+          ‖f t x - f t y‖ = ‖x - y + t • (v x - v y)‖ := by sorry
+          _ ≥ ‖x-y‖ - ‖t • (v x - v y)‖ := by apply norm_sub_norm_le''
+          _ = ‖x-y‖ - |t| * ‖v x - v y‖ := by rw [norm_smul, Real.norm_eq_abs]
+          _ ≥ ‖x-y‖ - |t| * (K * ‖x-y‖) := by gcongr ; apply hK₂.dist_le_mul
+
+      have G₂ : ∀ᶠ t in 𝓝 (0 : ℝ), (K:ℝ)*|t| < 1 := by
+        have H₁ : ∀ t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)), K*|t| < 1 := by
+          intro t ht
+          have : |t| < 1/K := abs_lt.mpr ht
+          rwa [lt_div_iff' hK₁] at this
+        have H₂ : ∀ᶠ t in 𝓝 (0 : ℝ), t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)) := by
+          refine Ioo_mem_nhds ?ha ?hb <;> simp [hK]
+
+        exact  H₂.mono H₁
+
+
 
   sorry
 

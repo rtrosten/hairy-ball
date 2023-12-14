@@ -1,5 +1,7 @@
 import Mathlib
 
+noncomputable section
+
 open RealInnerProductSpace
 
 notation "E" n:30 => EuclideanSpace ℝ (Fin n)
@@ -74,52 +76,49 @@ theorem hairy_ball_aux {n} {v : E n → E n} (h : IsEqvSphVF v) (h' : ∀x, ‖x
 lemma norm_sub_norm_le'' {F : Type*} [SeminormedAddGroup F] (a b : F) : ‖a‖ - ‖b‖ ≤ ‖a + b‖ := by
   convert norm_sub_norm_le a (-b) using 1 <;> simp
 
+def f {n} (v : E n → E n) (t : ℝ) (x : E n) : E n := x + t • (v x)
 
+lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
+  rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
+  have hK₁ := hK.1
+  have hK₂ := hK.2
+  have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C, AntilipschitzWith (C : NNReal) (f v t) := by
+    have G₁ : ∀ t, ∀ x y : E n, ‖f v t x - f v t y‖ ≥ (1-(K:ℝ)*|t|) * ‖x-y‖ := by
+      sorry/- intro t x y
+      calc
+        ‖f v t x - f v t y‖ = ‖x - y + t • (v x - v y)‖ := by congr 1; rw [smul_sub]; dsimp [f]; abel
+        _ ≥ ‖x-y‖ - ‖t • (v x - v y)‖ := by apply norm_sub_norm_le''
+        _ = ‖x-y‖ - |t| * ‖v x - v y‖ := by rw [norm_smul, Real.norm_eq_abs]
+        _ ≥ ‖x-y‖ - |t| * (K * ‖x-y‖) := by gcongr ; apply hK₂.dist_le_mul
+        _ = (1-K*|t|)*‖x-y‖ := by linarith -/
+
+    have G₂ : ∀ᶠ t in 𝓝 (0 : ℝ), (K:ℝ)*|t| < 1 := by
+      sorry/- have H₁ : ∀ t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)), K*|t| < 1 := by
+        intro t ht
+        have : |t| < 1/K := abs_lt.mpr ht
+        have hK₁' : (0 : ℝ) < K := by exact_mod_cast hK₁
+        rwa [lt_div_iff' hK₁'] at this
+      have H₂ : ∀ᶠ t in 𝓝 (0 : ℝ), t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)) := by
+        refine Ioo_mem_nhds ?ha ?hb <;> simp [hK]
+      exact H₂.mono H₁ -/
+
+    have G₃ : ∀ (t : ℝ), (K:ℝ) * |t| < 1 → 1 - (K:ℝ) * |t| > 0 := by
+      sorry/- intro t ht
+      linarith -/
+
+    have G₄ := G₂.mono G₃
+
+    have G₅ : ∀ (t : ℝ), 1-(K:ℝ) * |t| > 0 → ∃ C, AntilipschitzWith C (f v t) := by
+      intro t ht
+      use ⟨1-K*|t|, ht.le⟩
+      sorry
+    sorry
+  sorry
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
 ∀ x, ‖v x‖ = 1) : Even n := by
-  let f : ℝ → E n → E n := fun t ↦ (fun x ↦ (x + t • (v x)))
-  have ss_inj : suff_small_inj f := by
-    rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
-    have hK₁ := hK.1
-    have hK₂ := hK.2
-    have F₁ : ∀ᶠ t in 𝓝 (0 : ℝ), ∃C, AntilipschitzWith (C : NNReal) (f t) := by
-      have G₁ : ∀ t, ∀ x y : E n, ‖f t x - f t y‖ ≥ (1-(K:ℝ)*|t|) * ‖x-y‖ := by
-        intro t x y
-        calc
-          ‖f t x - f t y‖ = ‖x - y + t • (v x - v y)‖ := by sorry
-          _ ≥ ‖x-y‖ - ‖t • (v x - v y)‖ := by apply norm_sub_norm_le''
-          _ = ‖x-y‖ - |t| * ‖v x - v y‖ := by rw [norm_smul, Real.norm_eq_abs]
-          _ ≥ ‖x-y‖ - |t| * (K * ‖x-y‖) := by gcongr ; apply hK₂.dist_le_mul
-          _ = (1-K*|t|)*‖x-y‖ := by linarith
-
-      have G₂ : ∀ᶠ t in 𝓝 (0 : ℝ), (K:ℝ)*|t| < 1 := by
-        have H₁ : ∀ t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)), K*|t| < 1 := by
-          intro t ht
-          have : |t| < 1/K := abs_lt.mpr ht
-          have hK₁' : (0 : ℝ) < K := by exact_mod_cast hK₁
-          rwa [lt_div_iff' hK₁'] at this
-        have H₂ : ∀ᶠ t in 𝓝 (0 : ℝ), t ∈ Ioo (-(1/(K:ℝ))) (1/(K:ℝ)) := by
-          refine Ioo_mem_nhds ?ha ?hb <;> simp [hK]
-        exact H₂.mono H₁
-
-      have G₃ : ∀ (t : ℝ), (K:ℝ) * |t| < 1 → 1 - (K:ℝ) * |t| > 0 := by
-        intro t ht
-        linarith
-
-      have G₄ := G₂.mono G₃
-
-      have G₅ : ∀ (t : ℝ), 1-(K:ℝ) * |t| > 0 → ∃ C, AntilipschitzWith C (f t) := by
-        intro t ht
-        use ⟨1-K*|t|, ht.le⟩
-
-
-
-
-
-
-
-
+  --let f : ℝ → E n → E n := fun t ↦ (fun x ↦ (x + t • (v x)))
+  have ss_inj : suff_small_inj (f v) := f_inj h
   sorry
 
 

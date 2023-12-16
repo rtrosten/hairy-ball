@@ -6,6 +6,7 @@ open RealInnerProductSpace
 open Polynomial MeasureTheory Metric ENNReal Topology Set Filter Function
 
 notation "E" n:30 => EuclideanSpace ℝ (Fin n)
+notation "S" n:30 "_(" r:10 ")" => Metric.sphere (0 : EuclideanSpace ℝ (Fin (n+1))) r
 
 
 structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) where

@@ -3,9 +3,9 @@ import Mathlib
 noncomputable section
 
 open RealInnerProductSpace
+open Polynomial MeasureTheory Metric ENNReal Topology Set Filter Function
 
 notation "E" n:30 => EuclideanSpace ℝ (Fin n)
-
 
 
 structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) where
@@ -16,7 +16,7 @@ structure IsEqvSphVF {n : ℕ}
   (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) extends IsSphVF v where
   equiv : ∀ r > (0 : ℝ), ∀ x, v (r • x) = r • v x
 
-open Polynomial MeasureTheory Metric ENNReal Topology Set Filter Function
+
 
 def suff_small_inj {n} (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Injective (f t)
 def suff_small_surj {n} (f: ℝ → E n → E n) := ∀ᶠ t in 𝓝 (0:ℝ), Surjective (f t)
@@ -77,6 +77,8 @@ lemma norm_sub_norm_le'' {F : Type*} [SeminormedAddGroup F] (a b : F) : ‖a‖ 
   convert norm_sub_norm_le a (-b) using 1 <;> simp
 
 def f {n} (v : E n → E n) (t : ℝ) (x : E n) : E n := x + t • (v x)
+
+def H {n} (t : ℝ) (x : E n) : E n := t • x
 
 lemma f_inj {n} {v : E n → E n} (h : IsSphVF v) : suff_small_inj (f v) := by
   rcases (c1_implies_lipschitz v h.diff) with ⟨K, hK⟩
@@ -146,12 +148,16 @@ lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ u : E n, ‖u‖ = 
         rw [hv u hu]
         simp
   let g := fun v t x ↦ (1 / (Real.sqrt (1 + t^2))) • (f (n := n) v t x)
-  have restrict : g '' {x : E n | ‖x‖ = 1} ⊆ {x : E n | ‖x‖ = 1} := by
+  have restrict : g v t  '' {x : E n | ‖x‖ = 1} ⊆ {x : E n | ‖x‖ = 1} := by
+    sorry
   sorry
 
+
+
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
-∀ x, ‖v x‖ = 1) : Even n := by
+∀ x, ‖x‖ = 1 → ‖v x‖ = 1) : Even n := by
   have ss_inj : suff_small_inj (f v) := f_inj h
+  have ss_surj := f_surj h h''
   sorry
 
 

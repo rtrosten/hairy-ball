@@ -146,7 +146,7 @@ lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ u : E n, ‖u‖ = 
         rw [hv u hu]
         simp
   let g := fun v t x ↦ (1 / (Real.sqrt (1 + t^2))) • (f (n := n) v t x)
-  have restrict : g '' {x : E n | ‖x‖ = 1} ⊆ {x : E n | ‖x‖ = 1} := by
+  have restrict : g v t '' {x : E n | ‖x‖ = 1} ⊆ {x : E n | ‖x‖ = 1} := by sorry
   sorry
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :

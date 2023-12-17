@@ -6,7 +6,7 @@ open RealInnerProductSpace
 open Polynomial MeasureTheory Metric ENNReal Topology Set Filter Function
 
 notation "E" n:30 => EuclideanSpace ℝ (Fin n)
-notation "S" n:30 "_(" r:10 ")" => Metric.sphere (0 : EuclideanSpace ℝ (Fin n)) r
+--notation "S" n:30 "_(" r:10 ")" => Metric.sphere (0 : EuclideanSpace ℝ (Fin n)) r
 
 
 structure IsSphVF {n : ℕ} (v : EuclideanSpace ℝ (Fin n) → EuclideanSpace ℝ (Fin n)) where
@@ -147,7 +147,7 @@ lemma annulem {n} : {x : E n | 0.5 ≤ ‖x‖ ∧ ‖x‖ ≤ 1.5} = ⋃ (r ∈
     exact w
 
 @[simp]
-lemma srqt_pos (t : ℝ) : 0 < Real.sqrt (1 + t^2) := by
+lemma my_sqrt_pos (t : ℝ) : 0 < Real.sqrt (1 + t^2) := by
   refine Real.sqrt_pos.mpr ?_ -- suggested by apply?
   positivity -- gets rid of obvious positivity goals.
 
@@ -167,6 +167,80 @@ lemma norm_f {n} {v : E n → E n} (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ �
 lemma norm_f_on_sphere {n} {v : E n → E n} (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0)
     (t : ℝ) (u : E n) (hu : ‖u‖ = 1) : ‖f v t u‖ = sqrt (1 + t^2) := by
   simp [norm_f hv t u, hu]
+
+open NNReal hiding sqrt
+
+def A (n : ℕ) := {x : E n | 1/2 ≤ ‖x‖ ∧ ‖x‖ ≤ 3/2}
+
+def g {n} (v : E n → E n) (y : E n) (t : ℝ) (x : E n) := y - t • v x
+
+@[reducible]
+def S (n : ℕ) (r : ℝ) := sphere (0 : E n) r
+
+lemma g_mapsTo {n} (v : E n → E n) :
+    ∀ᶠ t in 𝓝 0, ∀ y ∈ S n 1, Set.MapsTo (g v y t) (A n) (A n) := by
+  sorry
+
+lemma g_lip {n} (v : E n → E n) :
+    ∀ᶠ t in 𝓝 0, ∀ y ∈ S n 1, ∃ K < (1 : ℝ≥0), LipschitzOnWith K (g v y t) (A n) := by
+  sorry
+
+lemma eq_of_sq_eq {x y : ℝ} (hx : 0 ≤ x) (hy : 0 ≤ y) (h : x^2 = y^2) : x = y := by
+  apply_fun sqrt at h
+  simpa [hx, hy] using h
+
+lemma g_normed_fixePt {n} {v : E n → E n} {y x t} (hx : g v y t x = x)
+    (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (hv' : ∀ r : ℝ, ∀ x : E n, v (r • x) = r • v x) (hy : ‖y‖ = 1):
+    ‖x‖ = 1/(sqrt (1+t^2)) := by
+  unfold g at hx
+  specialize hv x
+  apply eq_one_div_of_mul_eq_one_right
+  apply eq_of_sq_eq
+  positivity
+  norm_num
+  simp [mul_pow, Real.sq_sqrt (show 0 ≤ 1 + t^2 by positivity)]
+  rw [sub_eq_iff_eq_add] at hx
+  apply_fun (fun z ↦ ‖z‖^2) at hx
+  rw [hy, one_pow] at hx
+
+  sorry
+
+lemma f_surj' {n} {v : E n → E n} (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (hv' : ∀ r : ℝ, ∀ x : E n, v (r • x) = r • v x) :
+    ∀ᶠ t in 𝓝 (0 : ℝ), ∀ u' : E n, ‖u'‖ = sqrt (1 + t^2) → ∃ u ∈ S n 1, f v t u = u' := by
+  have complete_A : IsComplete (A n) := (isClosed_Icc.preimage continuous_norm ).isComplete
+  apply ((g_mapsTo v).and (g_lip v)).mono
+  rintro t ⟨H, H'⟩ u' hu'
+  let y := (sqrt (1 + t^2))⁻¹ • u'
+  have norm_y : ‖y‖ = 1 := by
+    unfold_let y
+    rw [norm_smul, hu']
+    field_simp [my_sqrt_pos, abs_of_pos]
+  have y_in_S : y ∈ S n 1 := by
+    rwa [mem_sphere_zero_iff_norm]
+  have y_in_A : y ∈ A n  := by
+    constructor
+    all_goals
+      rw [norm_y]
+      norm_num
+  specialize H y y_in_S
+  rcases H' y y_in_S with ⟨K, hK⟩
+  rw [MapsTo.lipschitzOnWith_iff_restrict H] at hK
+  have edist_g₀ : edist y (g v y t y) ≠ ⊤ := edist_ne_top _ _
+  rcases ContractingWith.exists_fixedPoint' complete_A H hK y_in_A edist_g₀ with ⟨x, -, x_fixed, -⟩
+  use (sqrt (1+t^2)) • x
+  constructor
+  · rw [mem_sphere_zero_iff_norm, norm_smul, g_normed_fixePt x_fixed hv hv' norm_y]
+    field_simp [my_sqrt_pos, (my_sqrt_pos t).le]
+  · unfold f
+    rw [hv']
+    conv =>
+      congr
+      congr
+      rw [← x_fixed]
+    unfold g
+    rw [smul_sub, sub_add, smul_smul t, smul_smul _ t, mul_comm, ← smul_sub]
+    field_simp [my_sqrt_pos, (my_sqrt_pos t).le, y, smul_smul]
+
 
 lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (hv' : ∀ r : ℝ, ∀ x : E n, v (r • x) = r • v x) :
     ∀ᶠ t in 𝓝 (0 : ℝ), ∀ u' : E n, ‖u'‖ = sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u' := by

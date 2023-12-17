@@ -146,180 +146,166 @@ lemma annulem {n} : {x : E n | 0.5 ≤ ‖x‖ ∧ ‖x‖ ≤ 1.5} = ⋃ (r ∈
     rw [mem_setOf_eq, hw]
     exact w
 
-lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (hv' : ∀ r : ℝ, ∀ x : E n, v (r • x) = r • v x) : ∀ᶠ t in 𝓝 (0 : ℝ), (∀ u : E n, ‖u‖ = 1 → ‖f v t u‖ = Real.sqrt (1 + t^2))
-  ∧ (∀ u' : E n, ‖u'‖ = Real.sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u') := by
-  have norm_lemma : ∀ t : ℝ, ∀ x : E n, ‖x + t • v x‖ = ‖x‖ * Real.sqrt (1 + t^2) := by
-    intro t x
-    have square : ‖x + t • v x‖^2 = ‖x‖^2 * (1 + t^2) := by
-      calc ‖x + t • v x‖^2 = ‖x‖^2 + 2 * ⟪x, (t • v x)⟫ + ‖t • v x‖^2 := norm_add_sq_real x (t • v x)
-        _ = ‖x‖^2 + ‖t • v x‖^2 := by
-          simp [-PiLp.inner_apply, real_inner_smul_right, (hv x).right]
-        _ = ‖x‖^2 + t^2 * ‖v x‖^2 := by
-          rw [norm_smul, mul_pow]
-          simp
-        _ = ‖x‖^2 * (1 + t^2) := by
-          rw [mul_comm, (hv x).left]
-          exact (mul_one_add (‖x‖ ^ 2) (t ^ 2)).symm
-    have pos1 : 0 ≤ ‖x + t • v x‖ := by exact norm_nonneg (x + t • v x)
-    have pos2 : 0 ≤ ‖x‖^2 * (1 + t^2) := by
-      have pos3 : 0 ≤ 1 + t^2 := calc 0 ≤ t^2 := sq_nonneg t
-          _ ≤ 1 + t^2 := by linarith
-      exact mul_nonneg (sq_nonneg ‖x‖) pos3
-    calc ‖x + t • v x‖ = Real.sqrt (‖x‖^2 * (1 + t^2)) := ((fun {x y} hx hy ↦ (Real.sqrt_eq_iff_sq_eq hx hy).mpr) pos2 pos1 square).symm
-      _ = Real.sqrt (‖x‖^2) * Real.sqrt (1 + t^2) := by
-        refine Real.sqrt_mul (sq_nonneg ‖x‖) (1 + t ^ 2)
-      _ = ‖x‖ * Real.sqrt (1 + t^2) := by
-        congr
-        refine Real.sqrt_sq (norm_nonneg x)
-  have first : ∀ᶠ t in 𝓝 (0 : ℝ), ∀ u : E n, ‖u‖ = 1 → ‖f v t u‖ = Real.sqrt (1 + t^2) := by
-    have fact : ∀ t : ℝ, ∀ u : E n, ‖u‖ = 1 → ‖f v t u‖ = Real.sqrt (1 + t^2) := by
-      intro t u hu
-      unfold f
-      rw [norm_lemma t u]
-      simp [hu]
-    sorry
-  have second : ∀ᶠ t in 𝓝 (0 : ℝ), ∀ u' : E n, ‖u'‖ = Real.sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u' := by
-    have LipCst : ∃ K > 0, LipschitzWith K (Set.restrict {x : E n | 1/2 ≤ ‖x‖ ∧ ‖x‖ ≤ 3/2} v) := by sorry -- This is that Lip on compact thing
-    rcases LipCst with ⟨K, hvK⟩
-    have point : ∀ t : ℝ, |t| < 1/3 ∧ |t| < 1/K → ∀ u' : E n, ‖u'‖ = Real.sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u' := by
-      intro t ht u' hu'
-      have hu'' : ‖u'‖ = |Real.sqrt (1 + t^2)| := by
-        rw [hu']
-        exact (LatticeOrderedGroup.abs_of_nonneg (Real.sqrt (1 + t^2)) (Real.sqrt_nonneg (1 + t ^ 2))).symm
-      have calculation : |1/(Real.sqrt (1 + t^2))| * |Real.sqrt (1 + t^2)| = 1 := by
-        rw [abs_one_div (Real.sqrt (1 + t^2))] -- no way i'm stuck on this
-        sorry
-      unfold f
-      let A := {x : E n | 1/2 ≤ ‖x‖ ∧ ‖x‖ ≤ 3/2}
+@[simp]
+lemma srqt_pos (t : ℝ) : 0 < Real.sqrt (1 + t^2) := by
+  refine Real.sqrt_pos.mpr ?_ -- suggested by apply?
+  positivity -- gets rid of obvious positivity goals.
 
-      have complete : IsComplete A := by
-        apply IsClosed.isComplete
-        have h_1 : IsClosed {x : E n | 1/2 ≤ ‖x‖} := by sorry
-        have h_2 : IsClosed {x : E n | ‖x‖ ≤ 3/2} := by sorry
-        apply IsClosed.inter h_1 h_2
-      let g₀ := fun x : E n ↦ (1/(Real.sqrt (1 + t^2))) • u' - t • v x
-      have hg₀ : Set.MapsTo g₀ A A := by
-        intro x hx
-        have : |t| * ‖(x : E n)‖ ≤ 1/2 := by
-          calc |t| * ‖(x : E n)‖ ≤ 1/3 * 3/2 := by sorry
-            _ = 1/2 := by ring
-        have : 1 - 1/2 ≤ 1 - |t| * ‖(x : E n)‖ := by
-          sorry
-        constructor
-        · dsimp
-          calc 1/2 = 1 - 1/2 := by ring
-            _ ≤ |1/(Real.sqrt (1 + t^2))| * ‖u'‖ - |t| * ‖(x : E n)‖ := by
-              rw [hu'', calculation]
-              exact this
-            _ = ‖(1/(Real.sqrt (1 + t^2))) • u'‖ - ‖t • v x‖ := by
-              congr
-              sorry
-            _ ≤ |‖(1/(Real.sqrt (1 + t^2))) • u'‖ - ‖t • v x‖| := le_abs_self (‖(1 / Real.sqrt (1 + t ^ 2)) • u'‖ - ‖t • v ↑x‖)
-            _ ≤ ‖(1/(Real.sqrt (1 + t^2))) • u' - t • v x‖ := by apply abs_norm_sub_norm_le
-        · dsimp
-          calc ‖(1 / Real.sqrt (1 + t ^ 2)) • u' - t • v ↑x‖ ≤ ‖(1 / Real.sqrt (1 + t ^ 2)) • u'‖ + ‖t • v ↑x‖ := by sorry
-            _ ≤ 1 + t * ‖(x : E n)‖ := by sorry
-            _ ≤ 3/2 := by sorry
-      have pos : 0 ≤ |t| * (K : ℝ) := by sorry
-      have pos' : Real.toNNReal (|t| * (K : ℝ)) = |t| * (K : ℝ) := Real.coe_toNNReal (|t| * (K : ℝ)) pos
-      have contract : ContractingWith (Real.toNNReal (|t| * (K : ℝ))) (Set.MapsTo.restrict g₀ A A hg₀) := by
-        constructor
-        · sorry
-        · intro x y
-          have simplify₀ : edist (MapsTo.restrict g₀ A A hg₀ x) (MapsTo.restrict g₀ A A hg₀ y) = ENNReal.ofReal ‖g₀ x - g₀ y‖ := by sorry
-          have simplify₁ : ENNReal.toReal (ENNReal.ofReal ‖g₀ x - g₀ y‖) = ‖g₀ x - g₀ y‖ := by sorry
-          rw [simplify₀]
-          have key : ‖g₀ x - g₀ y‖ ≤ |t| * (K : ℝ) * ‖(x : E n) - (y : E n)‖ := by
-            calc ‖g₀ x - g₀ y‖ = ‖((1/(Real.sqrt (1 + t^2))) • u' - t • v x) - ((1/(Real.sqrt (1 + t^2))) • u' - t • v y)‖ := by rfl
-              _ = ‖t • v y - t • v x‖ := by simp
-              _ = ‖t • (v y - v x)‖ := by
-                rw [smul_sub]
-              _ = |t| * ‖v y - v x‖ := by
-                rw [norm_smul, Real.norm_eq_abs]
-              _ = |t| * ((K : ℝ) * ‖(y : E n) - (x : E n)‖) := by
-                have weird : ENNReal.toReal ⟨‖(y : E n) - (x : E n)‖, norm_nonneg (y - x)⟩ = edist y x := by sorry
-                sorry -- very, very stuck on how to make this work
-              _ = |t| * (K : ℝ) * ‖(x : E n) - (y : E n)‖ := by
-                rw [mul_assoc]
-                simp
-                left
-                left
-                rw [← norm_neg]
-                congr
-                abel
-          sorry
-      have duh : ∃ x, x ∈ A := by sorry
-      rcases duh with ⟨p, hp⟩
-      have findist : edist p (g₀ p) ≠ ⊤ := edist_ne_top p (g₀ p)
-      have key : ∃ u, Function.IsFixedPt g₀ u := by
-        have banach := ContractingWith.exists_fixedPoint' complete hg₀ contract hp findist
-        rcases banach with ⟨u, hu⟩
-        use u
-        exact hu.right.left
-      rcases key with ⟨u, hu⟩
-      use (Real.sqrt (1 + t^2)) • u
-      have key' : (Real.sqrt (1 + t^2)) • u + t • v ((Real.sqrt (1 + t^2)) • u) = u' := by
-        unfold IsFixedPt at hu
-        have comp₀ : (1/(Real.sqrt (1 + t^2))) • u' - t • v u = u := hu
-        have comp₁ : u' - t • v ((Real.sqrt (1 + t^2)) • u) = (Real.sqrt (1 + t^2)) • u := by
-          calc u' - t • v ((Real.sqrt (1 + t^2)) • u) = u' - t • ((Real.sqrt (1 + t^2)) • v u) := by rw [hv' (Real.sqrt (1 + t^2)) u]
-            _ = u' - (Real.sqrt (1 + t^2)) • (t • v u) := by
-              simp
-              exact smul_algebra_smul_comm (Real.sqrt (1 + t ^ 2)) t (v u)
-            _ = (Real.sqrt (1 + t^2)) • ((1/(Real.sqrt (1 + t^2))) • u' - t • v u) := by
-              rw [smul_sub]
-              simp
-              refine (smul_inv_smul₀ ?hc u').symm
-              have contra : Real.sqrt (1 + t^2) > 0 := by
-                rw [gt_iff_lt, Real.sqrt_pos]
-                calc 0 < 1 := Real.zero_lt_one
-                  _ ≤ 1 + t^2 := by refine le_add_of_nonneg_right (sq_nonneg t)
-              exact ne_of_gt contra
-            _ = (Real.sqrt (1 + t^2)) • u := by rw [comp₀]
-        nth_rw 1 [← comp₁]
-        simp
+open Real
+
+lemma norm_f {n} {v : E n → E n} (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (t : ℝ) (x : E n) :
+    ‖f v t x‖ = ‖x‖ * sqrt (1 + t^2) := by
+  have square : ‖x + t • v x‖^2 = ‖x‖^2 * (1 + t^2) := by
+    calc ‖x + t • v x‖^2 = ‖x‖^2 + 2 * ⟪x, (t • v x)⟫ + ‖t • v x‖^2 := norm_add_sq_real x (t • v x)
+      _ = ‖x‖^2 + ‖t • v x‖^2 := by simp [-PiLp.inner_apply, real_inner_smul_right, (hv x).right]
+      _ = ‖x‖^2 + t^2 * ‖x‖^2 := by simp [norm_smul, mul_pow, (hv x).left]
+      _ = ‖x‖^2 * (1 + t^2) := by ring
+  calc ‖x + t • v x‖ = sqrt (‖x‖^2 * (1 + t^2)) := by rw [eq_comm, sqrt_eq_iff_sq_eq, square] <;> positivity
+    _ = sqrt (‖x‖^2) * sqrt (1 + t^2) := by apply sqrt_mul; positivity
+    _ = ‖x‖ * sqrt (1 + t^2) := by rw [sqrt_sq]; positivity
+
+lemma norm_f_on_sphere {n} {v : E n → E n} (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0)
+    (t : ℝ) (u : E n) (hu : ‖u‖ = 1) : ‖f v t u‖ = sqrt (1 + t^2) := by
+  simp [norm_f hv t u, hu]
+
+lemma f_surj {n} {v : E n → E n} (h : IsSphVF v) (hv : ∀ x : E n, ‖v x‖ = ‖x‖ ∧ ⟪x, v x⟫ = 0) (hv' : ∀ r : ℝ, ∀ x : E n, v (r • x) = r • v x) :
+    ∀ᶠ t in 𝓝 (0 : ℝ), ∀ u' : E n, ‖u'‖ = sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u' := by
+  have LipCst : ∃ K > 0, LipschitzWith K (Set.restrict {x : E n | 1/2 ≤ ‖x‖ ∧ ‖x‖ ≤ 3/2} v) := by sorry -- This is that Lip on compact thing
+  rcases LipCst with ⟨K, hvK⟩
+  have point : ∀ t : ℝ, |t| < 1/3 ∧ |t| < 1/K → ∀ u' : E n, ‖u'‖ = sqrt (1 + t^2) → ∃ u : E n, ‖u‖ = 1 ∧ f v t u = u' := by
+    intro t ht u' hu'
+    have hu'' : ‖u'‖ = |sqrt (1 + t^2)| := by
+      rw [hu']
+      exact (LatticeOrderedGroup.abs_of_nonneg (sqrt (1 + t^2)) (sqrt_nonneg (1 + t ^ 2))).symm
+    have calculation : |1/(sqrt (1 + t^2))| * |sqrt (1 + t^2)| = 1 := by
+      field_simp [abs_one_div]
+    unfold f
+    let A := {x : E n | 1/2 ≤ ‖x‖ ∧ ‖x‖ ≤ 3/2}
+
+    have complete : IsComplete A := by
+      apply IsClosed.isComplete
+      have h_1 : IsClosed {x : E n | 1/2 ≤ ‖x‖} := by sorry
+      have h_2 : IsClosed {x : E n | ‖x‖ ≤ 3/2} := by sorry
+      apply IsClosed.inter h_1 h_2
+    let g₀ := fun x : E n ↦ (1/(sqrt (1 + t^2))) • u' - t • v x
+    have hg₀ : Set.MapsTo g₀ A A := by
+      intro x hx
+      have : |t| * ‖(x : E n)‖ ≤ 1/2 := by
+        calc |t| * ‖(x : E n)‖ ≤ 1/3 * 3/2 := by sorry
+          _ = 1/2 := by ring
+      have : 1 - 1/2 ≤ 1 - |t| * ‖(x : E n)‖ := by
+        sorry
       constructor
-      · have comp := by
-          calc 1 + t^2 = (Real.sqrt (1 + t^2))^2 := by {
-            rw [Real.sq_sqrt ?_]
+      · dsimp
+        calc 1/2 = 1 - 1/2 := by ring
+          _ ≤ |1/(sqrt (1 + t^2))| * ‖u'‖ - |t| * ‖(x : E n)‖ := by
+            rw [hu'', calculation]
+            exact this
+          _ = ‖(1/(sqrt (1 + t^2))) • u'‖ - ‖t • v x‖ := by
+            rw [norm_smul, norm_smul, (hv x).1] ; rfl
+          _ ≤ |‖(1/(sqrt (1 + t^2))) • u'‖ - ‖t • v x‖| := le_abs_self (‖(1 / sqrt (1 + t ^ 2)) • u'‖ - ‖t • v ↑x‖)
+          _ ≤ ‖(1/(sqrt (1 + t^2))) • u' - t • v x‖ := by apply abs_norm_sub_norm_le
+      · dsimp
+        calc ‖(1 / sqrt (1 + t ^ 2)) • u' - t • v ↑x‖ ≤ ‖(1 / sqrt (1 + t ^ 2)) • u'‖ + ‖t • v ↑x‖ := by sorry
+          _ ≤ 1 + t * ‖(x : E n)‖ := by sorry
+          _ ≤ 3/2 := by sorry
+    have pos : 0 ≤ |t| * (K : ℝ) := by sorry
+    have pos' : Real.toNNReal (|t| * (K : ℝ)) = |t| * (K : ℝ) := Real.coe_toNNReal (|t| * (K : ℝ)) pos
+    have contract : ContractingWith (Real.toNNReal (|t| * (K : ℝ))) (Set.MapsTo.restrict g₀ A A hg₀) := by
+      constructor
+      · sorry
+      · intro x y
+        have simplify₀ : edist (MapsTo.restrict g₀ A A hg₀ x) (MapsTo.restrict g₀ A A hg₀ y) = ENNReal.ofReal ‖g₀ x - g₀ y‖ := by sorry
+        have simplify₁ : ENNReal.toReal (ENNReal.ofReal ‖g₀ x - g₀ y‖) = ‖g₀ x - g₀ y‖ := by sorry
+        rw [simplify₀]
+        have key : ‖g₀ x - g₀ y‖ ≤ |t| * (K : ℝ) * ‖(x : E n) - (y : E n)‖ := by
+          calc ‖g₀ x - g₀ y‖ = ‖((1/(sqrt (1 + t^2))) • u' - t • v x) - ((1/(sqrt (1 + t^2))) • u' - t • v y)‖ := by rfl
+            _ = ‖t • v y - t • v x‖ := by simp
+            _ = ‖t • (v y - v x)‖ := by
+              rw [smul_sub]
+            _ = |t| * ‖v y - v x‖ := by
+              rw [norm_smul, Real.norm_eq_abs]
+            _ = |t| * ((K : ℝ) * ‖(y : E n) - (x : E n)‖) := by
+              --have weird : ENNReal.toReal ⟨‖(y : E n) - (x : E n)‖, norm_nonneg (y - x)⟩ = edist y x := by sorry
+              sorry -- very, very stuck on how to make this work
+            _ = |t| * (K : ℝ) * ‖(x : E n) - (y : E n)‖ := by
+              rw [mul_assoc]
+              simp
+              left
+              left
+              rw [← norm_neg]
+              congr
+              abel
+          sorry
+        sorry
+    have duh : ∃ x, x ∈ A := by sorry
+    rcases duh with ⟨p, hp⟩
+    have findist : edist p (g₀ p) ≠ ⊤ := edist_ne_top p (g₀ p)
+    have key : ∃ u, Function.IsFixedPt g₀ u := by
+      have banach := ContractingWith.exists_fixedPoint' complete hg₀ contract hp findist
+      rcases banach with ⟨u, hu⟩
+      use u
+      exact hu.right.left
+    rcases key with ⟨u, hu⟩
+    use (sqrt (1 + t^2)) • u
+    have key' : (sqrt (1 + t^2)) • u + t • v ((sqrt (1 + t^2)) • u) = u' := by
+      unfold IsFixedPt at hu
+      have comp₀ : (1/(sqrt (1 + t^2))) • u' - t • v u = u := hu
+      have comp₁ : u' - t • v ((sqrt (1 + t^2)) • u) = (sqrt (1 + t^2)) • u := by
+        calc u' - t • v ((sqrt (1 + t^2)) • u) = u' - t • ((sqrt (1 + t^2)) • v u) := by rw [hv' (sqrt (1 + t^2)) u]
+          _ = u' - (sqrt (1 + t^2)) • (t • v u) := by
+            simp
+            exact smul_algebra_smul_comm (sqrt (1 + t ^ 2)) t (v u)
+          _ = (sqrt (1 + t^2)) • ((1/(sqrt (1 + t^2))) • u' - t • v u) := by
+            rw [smul_sub]
+            simp
+            refine (smul_inv_smul₀ ?hc u').symm
+            have contra : sqrt (1 + t^2) > 0 := by
+              rw [gt_iff_lt, sqrt_pos]
+              calc 0 < 1 := Real.zero_lt_one
+                _ ≤ 1 + t^2 := by refine le_add_of_nonneg_right (sq_nonneg t)
+            exact ne_of_gt contra
+          _ = (sqrt (1 + t^2)) • u := by rw [comp₀]
+      nth_rw 1 [← comp₁]
+      simp
+    constructor
+    · have comp := by
+        calc 1 + t^2 = (sqrt (1 + t^2))^2 := by {
+          rw [Real.sq_sqrt ?_]
+          calc 0 ≤ 1 := zero_le_one
+            _ ≤ 1 + t^2 := by refine le_add_of_nonneg_right (sq_nonneg t)
+        }
+          _ = ‖u'‖^2 := by rw [hu']
+          _ = ‖sqrt (1 + t ^ 2) • u + t • v (sqrt (1 + t ^ 2) • u)‖^2 := by rw [key']
+          _ = ‖sqrt (1 + t ^ 2) • u + t • ((sqrt (1 + t ^ 2)) • v u)‖^2 := by rw [hv' (sqrt (1 + t ^ 2)) u]
+          _ = ‖sqrt (1 + t ^ 2) • u + (sqrt (1 + t ^ 2)) • (t • v u)‖^2 := by rw [smul_algebra_smul_comm (sqrt (1 + t ^ 2)) t (v u)]
+          _ = ‖sqrt (1 + t^2) • (u + (t • v u))‖^2 := by rw[smul_add]
+          _ = (sqrt (1 + t^2) * ‖u + t • v u‖)^2 := by
+            congr
+            apply norm_smul_of_nonneg (sqrt_nonneg (1 + t^2)) (u + t • v u)
+          _ = (sqrt (1 + t^2))^2 * ‖u + t • v u‖^2 := by rw[mul_pow]
+          _ = (1 + t^2) * ‖u + t • v u‖^2 := by
+            congr
+            refine Real.sq_sqrt ?_
             calc 0 ≤ 1 := zero_le_one
               _ ≤ 1 + t^2 := by refine le_add_of_nonneg_right (sq_nonneg t)
-          }
-            _ = ‖u'‖^2 := by rw [hu']
-            _ = ‖Real.sqrt (1 + t ^ 2) • u + t • v (Real.sqrt (1 + t ^ 2) • u)‖^2 := by rw [key']
-            _ = ‖Real.sqrt (1 + t ^ 2) • u + t • ((Real.sqrt (1 + t ^ 2)) • v u)‖^2 := by rw [hv' (Real.sqrt (1 + t ^ 2)) u]
-            _ = ‖Real.sqrt (1 + t ^ 2) • u + (Real.sqrt (1 + t ^ 2)) • (t • v u)‖^2 := by rw [smul_algebra_smul_comm (Real.sqrt (1 + t ^ 2)) t (v u)]
-            _ = ‖Real.sqrt (1 + t^2) • (u + (t • v u))‖^2 := by rw[smul_add]
-            _ = (Real.sqrt (1 + t^2) * ‖u + t • v u‖)^2 := by
-              congr
-              apply norm_smul_of_nonneg (Real.sqrt_nonneg (1 + t^2)) (u + t • v u)
-            _ = (Real.sqrt (1 + t^2))^2 * ‖u + t • v u‖^2 := by rw[mul_pow]
-            _ = (1 + t^2) * ‖u + t • v u‖^2 := by
-              congr
-              refine Real.sq_sqrt ?_
-              calc 0 ≤ 1 := zero_le_one
-                _ ≤ 1 + t^2 := by refine le_add_of_nonneg_right (sq_nonneg t)
-            _ = (1 + t^2) * (‖u‖ * Real.sqrt (1 + t^2))^2 := by rw [norm_lemma t u]
-            _ = (1 + t^2) * (Real.sqrt (1 + t^2) * ‖u‖)^2 := by
-              rw [mul_comm (Real.sqrt (1 + t^2)) ‖u‖]
-            _ = (1 + t^2) * (‖Real.sqrt (1 + t^2) • u‖)^2 := by
-              congr
-              rw [norm_smul_of_nonneg (Real.sqrt_nonneg (1 + t^2)) u]
-        have duh : 1 + t^2 ≠ 0 := by sorry
-        rw [left_eq_mul₀ duh, sq_eq_one_iff] at comp
-        rcases comp with h1 | h2
-        · exact h1
-        · exfalso
-          have bad : 0 ≤ (-1 : ℝ) := by
-            rw [← h2]
-            exact norm_nonneg ((Real.sqrt (1 + t^2)) • u)
-          linarith
-      · exact key'
-    sorry
-
-  exact first.and second
-
-
+          _ = (1 + t^2) * (‖u‖ * sqrt (1 + t^2))^2 := by sorry
+          _ = (1 + t^2) * (sqrt (1 + t^2) * ‖u‖)^2 := by
+            rw [mul_comm (sqrt (1 + t^2)) ‖u‖]
+          _ = (1 + t^2) * (‖sqrt (1 + t^2) • u‖)^2 := by
+            congr
+            rw [norm_smul_of_nonneg (sqrt_nonneg (1 + t^2)) u]
+      have duh : 1 + t^2 ≠ 0 := by sorry
+      rw [left_eq_mul₀ duh, sq_eq_one_iff] at comp
+      rcases comp with h1 | h2
+      · exact h1
+      · exfalso
+        have bad : 0 ≤ (-1 : ℝ) := by
+          rw [← h2]
+          exact norm_nonneg ((sqrt (1 + t^2)) • u)
+        linarith
+    · exact key'
+  sorry
 
 theorem hairy_ball {n} {v : E n → E n} (h : IsSphVF v) (h' : ∀x, ‖x‖ = 1 → v x ≠ 0) (h'' :
 ∀ x, ‖x‖ = 1 → ‖v x‖ = 1) : Even n := by
